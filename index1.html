@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3adat - Daily Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Your exact Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhr-cdCfz0RkclFiz-_BxJkDctbP7PJSA",
+            authDomain: "adat-a41ad.firebaseapp.com",
+            projectId: "adat-a41ad",
+            storageBucket: "adat-a41ad.firebasestorage.app",
+            messagingSenderId: "749510315419",
+            appId: "1:749510315419:web:c5ec6ee05e2b39b676253e",
+            measurementId: "G-99WXYDNVVE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const habitsRef = collection(db, "habits");
+
+        // Helper: Get today's date in YYYY-MM-DD
+        const getTodayStr = () => {
+            const today = new Date();
+            return today.toLocaleDateString('en-CA'); 
+        };
+
+        // Helper: Get the last 5 days formatted
+        const getLast5Days = () => {
+            const dates = [];
+            for (let i = 4; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                dates.push(d.toLocaleDateString('en-CA'));
+            }
+            return dates;
+        };
+
+        // Global functions for HTML onclick events
+        window.addHabit = async (e) => {
+            e.preventDefault();
+            const input = document.getElementById("habitInput");
+            const name = input.value.trim();
+            if (!name) return;
+            
+            await addDoc(habitsRef, {
+                name: name,
+                history: [],
+                createdAt: new Date().toISOString()
+            });
+            input.value = "";
+        };
+
+        window.toggleHabit = async (id, currentHistory) => {
+            const today = getTodayStr();
+            const historyArray = currentHistory ? currentHistory.split(',') : [];
+            const index = historyArray.indexOf(today);
+            
+            if (index > -1) {
+                historyArray.splice(index, 1); // Remove if checked
+            } else {
+                historyArray.push(today); // Add if unchecked
+            }
+
+            const habitDoc = doc(db, "habits", id);
+            await updateDoc(habitDoc, { history: historyArray.filter(Boolean) });
+        };
+
+        window.deleteHabit = async (id) => {
+            if (confirm("Are you sure you want to delete this habit?")) {
+                await deleteDoc(doc(db, "habits", id));
+            }
+        };
+
+        window.editHabit = async (id, oldName) => {
+            const newName = prompt("Edit habit name:", oldName);
+            if (newName && newName.trim() !== "") {
+                await updateDoc(doc(db, "habits", id), { name: newName.trim() });
+            }
+        };
+
+        // Real-time listener to render UI
+        onSnapshot(habitsRef, (snapshot) => {
+            const list = document.getElementById("habitsList");
+            list.innerHTML = "";
+            const today = getTodayStr();
+            const last5Days = getLast5Days();
+
+            snapshot.forEach((documentSnapshot) => {
+                const habit = documentSnapshot.data();
+                const id = documentSnapshot.id;
+                const history = habit.history || [];
+                const isCompletedToday = history.includes(today);
+                const historyString = history.join(','); 
+
+                // Generate 5-day streak circles
+                let streakHTML = "";
+                last5Days.forEach(date => {
+                    const completed = history.includes(date);
+                    const isToday = date === today;
+                    streakHTML += `
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${completed ? 'bg-green-500' : 'bg-gray-200'} ${isToday ? 'ring-2 ring-offset-1 ring-blue-400' : ''}">
+                                ${completed ? '<i class="fas fa-check text-white scale-75"></i>' : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all hover:shadow-md">
+                        <div class="flex items-center gap-4 flex-1">
+                            <button onclick="toggleHabit('${id}', '${historyString}')" class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${isCompletedToday ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 text-transparent hover:border-green-400'}">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <span class="text-lg font-medium text-gray-800 ${isCompletedToday ? 'line-through text-gray-400' : ''}">${habit.name}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-6">
+                            <div class="flex gap-1">
+                                ${streakHTML}
+                            </div>
+                            <div class="flex gap-2 text-gray-400">
+                                <button onclick="editHabit('${id}', '${habit.name}')" class="hover:text-blue-500 transition-colors p-1"><i class="fas fa-pen text-sm"></i></button>
+                                <button onclick="deleteHabit('${id}')" class="hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans selection:bg-blue-100">
+    <div class="max-w-2xl mx-auto pt-12 px-4 pb-24">
+        
+        <header class="mb-10 text-center md:text-left">
+            <h1 class="text-4xl font-bold text-gray-900 tracking-tight">3adat</h1>
+            <p class="text-gray-500 mt-2">Track your daily momentum.</p>
+        </header>
+
+        <form onsubmit="addHabit(event)" class="mb-8 flex gap-2">
+            <input type="text" id="habitInput" placeholder="What habit do you want to build?" class="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm" required>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors">
+                Add
+            </button>
+        </form>
+
+        <div id="habitsList" class="flex flex-col gap-3">
+            <!-- Habit cards will render here automatically -->
+        </div>
+
+    </div>
+</body>
+</html>
