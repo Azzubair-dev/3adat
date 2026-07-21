@@ -86,7 +86,7 @@
         <div class="bg-gray-900 p-6 w-full max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl relative my-auto animate-[slideUp_0.3s_ease-out]">
             <div class="flex justify-between items-center mb-5">
                 <h3 id="modalTitle" class="font-bold text-white text-xl">Add New Habit</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center bg-white/10 rounded-full transition-colors"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center bg-white/10 rounded-full transition-colors"><i class="fas fa-times"></i></button>
             </div>
             
             <form onsubmit="saveHabit(event)" class="flex flex-col gap-4">
@@ -184,16 +184,17 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // --- PASTE YOUR FIREBASE CONFIG OBJECT HERE ---
+        // --- YOUR EXACT FIREBASE CONFIGURATION ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAhr-cdCfz0RkclFiz-_BxJkDctbP7PJSA",
+            authDomain: "adat-a41ad.firebaseapp.com",
+            projectId: "adat-a41ad",
+            storageBucket: "adat-a41ad.firebasestorage.app",
+            messagingSenderId: "749510315419",
+            appId: "1:749510315419:web:c5ec6ee05e2b39b676253e",
+            measurementId: "G-99WXYDNVVE"
         };
-        // ----------------------------------------------
+        // -----------------------------------------
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -223,7 +224,6 @@
             "Temporary": { name: "Temporary", emoji: "⏳", color: "gray" }
         };
 
-        // Safe Tailwind rendering without relying on dynamic classes that might get purged
         const colorStyles = {
             "emerald": { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-900", check: "bg-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" },
             "blue": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-900", check: "bg-blue-500 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" },
@@ -233,7 +233,6 @@
             "gray": { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-900", check: "bg-gray-500 border-gray-500 shadow-[0_0_10px_rgba(107,114,128,0.3)]" }
         };
 
-        // Derive unique categories from user's current habits
         const getAvailableCategories = () => {
             const cats = { ...defaultCategories };
             allHabits.forEach(h => {
@@ -253,7 +252,6 @@
             });
             select.innerHTML += `<option value="_NEW_" class="text-gray-900 font-bold border-t border-gray-300">✨ Create New Category...</option>`;
             
-            // Set value and trigger UI update
             select.value = cats[selectedName] ? selectedName : "Islamic";
             toggleNewCategory();
         };
@@ -285,7 +283,6 @@
             toggleRepetitiveInputs();
 
             if (habitId) {
-                // Editing
                 title.innerText = "Edit Habit";
                 const habit = allHabits.find(h => h.id === habitId);
                 
@@ -304,7 +301,6 @@
                     document.getElementById("specificDateInput").value = habit.scheduleData;
                 }
             } else {
-                // New
                 title.innerText = "Add New Habit";
                 populateCategoryDropdown("Islamic");
             }
@@ -321,7 +317,6 @@
             const checkboxes = document.querySelectorAll('.day-checkbox');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             
-            // If all are checked, uncheck all. Otherwise, check all.
             checkboxes.forEach(cb => cb.checked = !allChecked);
             updateEverydayBtn();
         };
@@ -368,7 +363,6 @@
             const name = nameInput.value.trim();
             if (!name) return;
 
-            // Build Schedule Data
             let scheduleData = null;
             if (isRepetitive) {
                 const checked = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => parseInt(cb.value));
@@ -379,7 +373,6 @@
                 if (!scheduleData) return alert("Please specify a date.");
             }
 
-            // Build Category Data
             const catSelectValue = document.getElementById("categorySelect").value;
             let categoryObj;
             if (catSelectValue === "_NEW_") {
@@ -392,26 +385,32 @@
                 categoryObj = getAvailableCategories()[catSelectValue];
             }
             
-            if (editingHabitId) {
-                await updateDoc(doc(db, "habits", editingHabitId), {
-                    name: name,
-                    repetitive: isRepetitive,
-                    scheduleData: scheduleData,
-                    category: categoryObj
-                });
-            } else {
-                await addDoc(habitsRef, {
-                    name: name,
-                    repetitive: isRepetitive,
-                    scheduleData: scheduleData,
-                    category: categoryObj,
-                    history: [],
-                    order: Date.now(),
-                    createdAt: new Date().toISOString()
-                });
-            }
-            
+            // INSTANT UI CLOSURE
             closeModal();
+            
+            try {
+                if (editingHabitId) {
+                    await updateDoc(doc(db, "habits", editingHabitId), {
+                        name: name,
+                        repetitive: isRepetitive,
+                        scheduleData: scheduleData,
+                        category: categoryObj
+                    });
+                } else {
+                    await addDoc(habitsRef, {
+                        name: name,
+                        repetitive: isRepetitive,
+                        scheduleData: scheduleData,
+                        category: categoryObj,
+                        history: [],
+                        order: Date.now(),
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                alert("Failed to save habit! Your Firebase database rules might have expired. Go to Firebase Console -> Firestore -> Rules, and set allow read, write: if true;");
+            }
         };
 
         window.toggleHabit = async (id, currentHistoryStr) => {
@@ -421,11 +420,21 @@
             if (index > -1) { historyArray.splice(index, 1); } 
             else { historyArray.push(window.selectedDate); }
 
-            await updateDoc(doc(db, "habits", id), { history: historyArray.filter(Boolean) });
+            try {
+                await updateDoc(doc(db, "habits", id), { history: historyArray.filter(Boolean) });
+            } catch (error) {
+                alert("Failed to update habit. Check Firebase rules.");
+            }
         };
 
         window.deleteHabit = async (id) => {
-            if (confirm("Delete this habit entirely?")) await deleteDoc(doc(db, "habits", id));
+            if (confirm("Delete this habit entirely?")) {
+                try {
+                    await deleteDoc(doc(db, "habits", id));
+                } catch(error) {
+                    alert("Failed to delete habit. Check Firebase rules.");
+                }
+            }
         };
 
         window.moveHabit = async (habitId, direction) => {
@@ -445,8 +454,12 @@
             
             if (newCurrentOrder === newTargetOrder) newCurrentOrder += (direction * 10);
 
-            await updateDoc(doc(db, "habits", currentHabit.id), { order: newCurrentOrder });
-            await updateDoc(doc(db, "habits", targetHabit.id), { order: newTargetOrder });
+            try {
+                await updateDoc(doc(db, "habits", currentHabit.id), { order: newCurrentOrder });
+                await updateDoc(doc(db, "habits", targetHabit.id), { order: newTargetOrder });
+            } catch (error) {
+                alert("Failed to move habit. Check Firebase rules.");
+            }
         };
 
         // --- Calendar Logic ---
@@ -551,7 +564,6 @@
                     const isCompleted = history.includes(window.selectedDate);
                     const historyString = history.join(',');
                     
-                    // Determine Style based on Category
                     const catObj = habit.category || defaultCategories["Temporary"];
                     const style = colorStyles[catObj.color] || colorStyles["gray"];
                     
@@ -596,6 +608,9 @@
                     };
                 });
                 renderApp();
+            }, (error) => {
+                console.error("Listen Error:", error);
+                alert("Failed to connect to Firebase. Check your database rules!");
             });
         });
     </script>
