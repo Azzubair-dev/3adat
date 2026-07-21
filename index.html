@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3adat - Smart Categories</title>
+    <title>3adat - Track Daily Habits</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -91,12 +91,17 @@
             
             <form onsubmit="saveHabit(event)" class="flex flex-col gap-4">
                 
-                <!-- Category Selector -->
-                <div class="relative">
-                    <select id="categorySelect" onchange="toggleNewCategory()" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white appearance-none cursor-pointer font-medium">
-                        <!-- Populated by JS -->
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                <!-- Category Selector with Delete Button -->
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <select id="categorySelect" onchange="toggleNewCategory()" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white appearance-none cursor-pointer font-medium">
+                            <!-- Populated by JS -->
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                    </div>
+                    <button type="button" id="deleteCategoryBtn" onclick="deleteCurrentCategory()" class="hidden bg-white/10 text-rose-400 hover:bg-rose-500 hover:text-white w-14 rounded-xl flex items-center justify-center transition-colors" title="Delete custom category">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
 
                 <!-- Custom Category Inputs (Hidden by default) -->
@@ -125,8 +130,6 @@
 
                 <!-- Repetitive Wrapper -->
                 <div id="repetitiveWrapper" class="flex flex-col gap-2 mt-1">
-                    
-                    <!-- Highly Visible Everyday Toggle -->
                     <button type="button" id="everydayBtn" onclick="toggleAllDays()" class="bg-gray-700 hover:bg-gray-600 text-white py-2.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm w-full border border-gray-600 mb-1">
                         <i class="fas fa-check-double"></i> Select Everyday
                     </button>
@@ -168,9 +171,15 @@
                     <input type="date" id="specificDateInput" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white css-invert-calendar font-medium">
                 </div>
 
-                <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white w-full py-4 rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors mt-3 text-lg">
-                    Save Habit
-                </button>
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-3">
+                    <button type="button" id="deleteHabitBtn" onclick="deleteCurrentHabit()" class="hidden bg-white/10 hover:bg-rose-500 text-rose-400 hover:text-white px-5 rounded-xl font-bold transition-colors">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button type="submit" class="flex-1 bg-brand-500 hover:bg-brand-600 text-white py-4 rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors text-lg">
+                        Save Habit
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -259,12 +268,22 @@
         window.toggleNewCategory = () => {
             const val = document.getElementById("categorySelect").value;
             const wrap = document.getElementById("newCategoryWrapper");
+            const delBtn = document.getElementById("deleteCategoryBtn");
+            
             if (val === "_NEW_") {
                 wrap.classList.remove("hidden");
                 wrap.classList.add("flex");
+                delBtn.classList.add("hidden"); // Don't show delete on the "new" form
             } else {
                 wrap.classList.add("hidden");
                 wrap.classList.remove("flex");
+                
+                // Show delete button only if it's a custom category
+                if (!defaultCategories[val]) {
+                    delBtn.classList.remove("hidden");
+                } else {
+                    delBtn.classList.add("hidden");
+                }
             }
         };
 
@@ -284,6 +303,7 @@
 
             if (habitId) {
                 title.innerText = "Edit Habit";
+                document.getElementById("deleteHabitBtn").classList.remove("hidden");
                 const habit = allHabits.find(h => h.id === habitId);
                 
                 populateCategoryDropdown(habit.category ? habit.category.name : "Islamic");
@@ -302,6 +322,7 @@
                 }
             } else {
                 title.innerText = "Add New Habit";
+                document.getElementById("deleteHabitBtn").classList.add("hidden");
                 populateCategoryDropdown("Islamic");
             }
 
@@ -355,7 +376,44 @@
             }
         };
 
-        // --- Database Logic ---
+        // --- Database Actions ---
+        
+        window.deleteCurrentCategory = async () => {
+            const catName = document.getElementById("categorySelect").value;
+            if (defaultCategories[catName] || catName === "_NEW_") return;
+
+            if (confirm(`Delete the "${catName}" category? Any habits using this category will be moved to "Temporary".`)) {
+                // Find all habits that have this category
+                const habitsToUpdate = allHabits.filter(h => h.category && h.category.name === catName);
+                
+                closeModal();
+                
+                try {
+                    for (const h of habitsToUpdate) {
+                        await updateDoc(doc(db, "habits", h.id), {
+                            category: defaultCategories["Temporary"]
+                        });
+                    }
+                } catch (error) {
+                    console.error("Firebase Error:", error);
+                    alert("Failed to delete category.");
+                }
+            }
+        };
+
+        window.deleteCurrentHabit = async () => {
+            if (!editingHabitId) return;
+            if (confirm("Are you sure you want to delete this habit permanently?")) {
+                const id = editingHabitId;
+                closeModal();
+                try {
+                    await deleteDoc(doc(db, "habits", id));
+                } catch(error) {
+                    alert("Failed to delete habit. Check Firebase rules.");
+                }
+            }
+        };
+
         window.saveHabit = async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("habitInput");
@@ -409,7 +467,7 @@
                 }
             } catch (error) {
                 console.error("Firebase Error:", error);
-                alert("Failed to save habit! Your Firebase database rules might have expired. Go to Firebase Console -> Firestore -> Rules, and set allow read, write: if true;");
+                alert("Failed to save habit! Check Firebase Database rules.");
             }
         };
 
@@ -424,16 +482,6 @@
                 await updateDoc(doc(db, "habits", id), { history: historyArray.filter(Boolean) });
             } catch (error) {
                 alert("Failed to update habit. Check Firebase rules.");
-            }
-        };
-
-        window.deleteHabit = async (id) => {
-            if (confirm("Delete this habit entirely?")) {
-                try {
-                    await deleteDoc(doc(db, "habits", id));
-                } catch(error) {
-                    alert("Failed to delete habit. Check Firebase rules.");
-                }
             }
         };
 
