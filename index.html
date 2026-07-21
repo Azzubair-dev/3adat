@@ -21,7 +21,6 @@
         }
     </script>
     <style>
-        /* Smooth custom scrollbar for calendar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
@@ -65,40 +64,34 @@
             <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
                 <!-- Calendar Days render here -->
             </div>
-            
-            <!-- Visual Legend -->
-            <div class="mt-5 pt-4 border-t border-gray-50 flex justify-center gap-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></div> Done</div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm"></div> Partial</div>
-                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm"></div> Missed</div>
-            </div>
         </div>
 
-        <!-- Selected Date Header -->
-        <div class="mb-4 flex items-end justify-between px-1">
+        <!-- Selected Date Header with Toggle Button -->
+        <div class="mb-4 flex items-center justify-between px-1">
             <h2 id="selectedDateLabel" class="text-xl font-bold text-gray-900">Habits</h2>
+            <button onclick="toggleAddForm()" class="text-brand-600 hover:bg-brand-100 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 transition-colors">
+                <i class="fas fa-plus"></i> New
+            </button>
         </div>
 
-        <!-- Habits List -->
-        <div id="habitsList" class="flex flex-col gap-3 mb-10">
-            <!-- Cards render here -->
-        </div>
-
-        <!-- Add Habit Form -->
-        <div class="bg-gray-900 p-6 rounded-2xl shadow-lg mt-8">
-            <h3 class="font-bold text-white mb-4 text-lg">Add New Habit</h3>
+        <!-- Hidden Add Habit Form -->
+        <div id="addHabitForm" class="hidden bg-gray-900 p-6 rounded-2xl shadow-lg mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-white text-lg">Add New Habit</h3>
+                <button onclick="toggleAddForm()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
             <form onsubmit="addHabit(event)" class="flex flex-col gap-4">
-                <input type="text" id="habitInput" placeholder="e.g., Read 10 pages, Gym..." class="px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white placeholder-gray-400" required>
+                <input type="text" id="habitInput" placeholder="e.g., Read 10 pages" class="px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white placeholder-gray-400" required>
                 
                 <div class="relative">
                     <select id="isRepetitive" onchange="toggleRepetitiveInputs()" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white appearance-none cursor-pointer">
-                        <option value="true" class="text-gray-900">🔄 Repetitive (Multiple days)</option>
-                        <option value="false" class="text-gray-900">📅 Specific Date (One time)</option>
+                        <option value="true" class="text-gray-900">Repetitive</option>
+                        <option value="false" class="text-gray-900">One time</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
                 </div>
 
-                <!-- Conditional: Days of the Week (Now properly toggles) -->
+                <!-- Conditional: Days of the Week -->
                 <div id="repetitiveWrapper" class="flex flex-wrap gap-2 mt-1">
                     <label class="flex-1 min-w-[30%] text-center cursor-pointer">
                         <input type="checkbox" value="0" class="day-checkbox peer sr-only">
@@ -141,6 +134,11 @@
             </form>
         </div>
 
+        <!-- Habits List -->
+        <div id="habitsList" class="flex flex-col gap-3 mb-10">
+            <!-- Cards render here -->
+        </div>
+
     </div>
 
     <!-- Move Scripts to the Bottom to Ensure HTML Loads First -->
@@ -171,24 +169,29 @@
             return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         };
 
+        const getTodayStr = () => toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+
         window.currentMonth = today.getMonth();
         window.currentYear = today.getFullYear();
-        window.selectedDate = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+        window.selectedDate = getTodayStr();
 
-        // --- UI Logic for the Form Toggle ---
+        // --- UI Logic ---
+        window.toggleAddForm = () => {
+            const form = document.getElementById("addHabitForm");
+            form.classList.toggle("hidden");
+        };
+
         window.toggleRepetitiveInputs = () => {
             const isRepetitive = document.getElementById("isRepetitive").value === "true";
             const repWrap = document.getElementById("repetitiveWrapper");
             const specWrap = document.getElementById("specificDateWrapper");
             
             if (isRepetitive) {
-                // Show Repetitive, Hide Specific
                 repWrap.classList.remove("hidden");
                 repWrap.classList.add("flex");
                 specWrap.classList.add("hidden");
                 specWrap.classList.remove("block");
             } else {
-                // Hide Repetitive, Show Specific
                 repWrap.classList.add("hidden");
                 repWrap.classList.remove("flex");
                 specWrap.classList.remove("hidden");
@@ -219,12 +222,14 @@
                 repetitive: isRepetitive,
                 scheduleData: scheduleData,
                 history: [],
+                order: Date.now(), // New order field
                 createdAt: new Date().toISOString()
             });
             
             nameInput.value = "";
             document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
             document.getElementById("specificDateInput").value = "";
+            toggleAddForm(); // Hide form after saving
         };
 
         window.toggleHabit = async (id, currentHistoryStr) => {
@@ -242,6 +247,31 @@
 
         window.deleteHabit = async (id) => {
             if (confirm("Delete this habit entirely?")) await deleteDoc(doc(db, "habits", id));
+        };
+
+        window.moveHabit = async (habitId, direction) => {
+            const dayOfWeekIndex = new Date(window.selectedDate).getDay();
+            let dueHabits = getHabitsForDate(window.selectedDate, dayOfWeekIndex);
+            dueHabits.sort((a, b) => a.order - b.order);
+            
+            const index = dueHabits.findIndex(h => h.id === habitId);
+            const targetIndex = index + direction;
+            
+            if (targetIndex < 0 || targetIndex >= dueHabits.length) return;
+            
+            const currentHabit = dueHabits[index];
+            const targetHabit = dueHabits[targetIndex];
+            
+            let newCurrentOrder = targetHabit.order;
+            let newTargetOrder = currentHabit.order;
+            
+            // Fallback just in case old habits share the exact same order number
+            if (newCurrentOrder === newTargetOrder) {
+                newCurrentOrder += (direction * 10);
+            }
+
+            await updateDoc(doc(db, "habits", currentHabit.id), { order: newCurrentOrder });
+            await updateDoc(doc(db, "habits", targetHabit.id), { order: newTargetOrder });
         };
 
         // --- Calendar Logic ---
@@ -274,16 +304,22 @@
 
         const getTrafficLightColor = (dateStr, dayOfWeekIndex) => {
             const habitsDue = getHabitsForDate(dateStr, dayOfWeekIndex);
+            const isFuture = dateStr > getTodayStr();
             
             // Neutral: No habits scheduled
             if (habitsDue.length === 0) return 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'; 
             
             const completedCount = habitsDue.filter(h => (h.history || []).includes(dateStr)).length;
             
+            // Green: All completed (Even in the future, if pre-completed)
+            if (completedCount === habitsDue.length) return 'bg-emerald-500 text-white border-emerald-600 shadow-sm font-semibold hover:bg-emerald-600'; 
+            
+            // Default Neutral: If it is a future day and NOT completely finished
+            if (isFuture) return 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'; 
+            
             // Red: Nothing completed
             if (completedCount === 0) return 'bg-rose-500 text-white border-rose-600 shadow-sm font-semibold hover:bg-rose-600'; 
-            // Green: All completed
-            if (completedCount === habitsDue.length) return 'bg-emerald-500 text-white border-emerald-600 shadow-sm font-semibold hover:bg-emerald-600'; 
+            
             // Yellow: Partially completed
             return 'bg-amber-400 text-white border-amber-500 shadow-sm font-semibold hover:bg-amber-500'; 
         };
@@ -299,7 +335,6 @@
             
             let calHTML = "";
             
-            // Empty slots
             for (let i = 0; i < firstDay; i++) {
                 calHTML += `<div class="p-1"></div>`;
             }
@@ -326,29 +361,36 @@
             const selectedDateObj = new Date(window.selectedDate);
             const displayDateObj = new Date(selectedDateObj.getTime() + Math.abs(selectedDateObj.getTimezoneOffset()*60000));
             
-            // If today, say "Today, Date". Otherwise just "Date"
-            const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+            const todayStr = getTodayStr();
             const prefix = window.selectedDate === todayStr ? "Today, " : "";
             const formattedSelectedDate = displayDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             
             document.getElementById("selectedDateLabel").innerText = `${prefix}${formattedSelectedDate}`;
             
             const habitsDueToday = getHabitsForDate(window.selectedDate, selectedDateObj.getDay());
+            
+            // SORT the habits based on their Order value
+            habitsDueToday.sort((a, b) => (a.order || 0) - (b.order || 0));
+
             list.innerHTML = "";
 
             if (habitsDueToday.length === 0) {
                 list.innerHTML = `
-                    <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 border-dashed shadow-sm">
+                    <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 border-dashed shadow-sm mt-4">
                         <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="fas fa-mug-hot text-gray-300 text-xl"></i>
                         </div>
                         <p class="text-gray-400 font-medium text-sm">You have a clear day ahead.</p>
                     </div>`;
             } else {
-                habitsDueToday.forEach((habit) => {
+                habitsDueToday.forEach((habit, index) => {
                     const history = habit.history || [];
                     const isCompleted = history.includes(window.selectedDate);
                     const historyString = history.join(',');
+                    
+                    // Logic to hide the Up arrow on the first item, and Down arrow on the last
+                    const upBtn = index > 0 ? `<button onclick="moveHabit('${habit.id}', -1)" class="text-gray-300 hover:text-gray-700 p-1 transition-colors"><i class="fas fa-chevron-up text-[11px]"></i></button>` : `<div class="w-5 h-5"></div>`;
+                    const downBtn = index < habitsDueToday.length - 1 ? `<button onclick="moveHabit('${habit.id}', 1)" class="text-gray-300 hover:text-gray-700 p-1 transition-colors"><i class="fas fa-chevron-down text-[11px]"></i></button>` : `<div class="w-5 h-5"></div>`;
 
                     list.innerHTML += `
                         <div class="bg-white p-4 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] border border-gray-100 flex justify-between items-center gap-4 transition-all ${isCompleted ? 'opacity-70' : 'hover:-translate-y-0.5 hover:shadow-md'}">
@@ -359,7 +401,12 @@
                                 </button>
                                 <span class="text-[17px] font-medium transition-all ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}">${habit.name}</span>
                             </div>
-                            <div class="flex gap-1">
+                            
+                            <div class="flex items-center border-l border-gray-100 pl-3">
+                                <div class="flex flex-col -space-y-1 mr-2">
+                                    ${upBtn}
+                                    ${downBtn}
+                                </div>
                                 <button onclick="deleteHabit('${habit.id}')" class="text-gray-300 hover:text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-trash-alt text-[13px]"></i></button>
                             </div>
                         </div>
@@ -371,7 +418,15 @@
         // Initialize App once DOM is fully ready
         document.addEventListener('DOMContentLoaded', () => {
             onSnapshot(habitsRef, (snapshot) => {
-                allHabits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                allHabits = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        // Fallback order for any habits created before we added the order feature
+                        order: data.order !== undefined ? data.order : new Date(data.createdAt).getTime()
+                    };
+                });
                 renderApp();
             });
         });
