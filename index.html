@@ -69,69 +69,9 @@
         <!-- Selected Date Header with Toggle Button -->
         <div class="mb-4 flex items-center justify-between px-1">
             <h2 id="selectedDateLabel" class="text-xl font-bold text-gray-900">Habits</h2>
-            <button onclick="toggleAddForm()" class="text-brand-600 hover:bg-brand-100 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 transition-colors">
+            <button onclick="openModal()" class="text-brand-600 hover:bg-brand-100 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 transition-colors">
                 <i class="fas fa-plus"></i> New
             </button>
-        </div>
-
-        <!-- Hidden Add Habit Form -->
-        <div id="addHabitForm" class="hidden bg-gray-900 p-6 rounded-2xl shadow-lg mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-white text-lg">Add New Habit</h3>
-                <button onclick="toggleAddForm()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <form onsubmit="addHabit(event)" class="flex flex-col gap-4">
-                <input type="text" id="habitInput" placeholder="e.g., Read 10 pages" class="px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white placeholder-gray-400" required>
-                
-                <div class="relative">
-                    <select id="isRepetitive" onchange="toggleRepetitiveInputs()" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white appearance-none cursor-pointer">
-                        <option value="true" class="text-gray-900">Repetitive</option>
-                        <option value="false" class="text-gray-900">One time</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
-                </div>
-
-                <!-- Conditional: Days of the Week -->
-                <div id="repetitiveWrapper" class="flex flex-wrap gap-2 mt-1">
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="0" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Sun</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="1" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Mon</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="2" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Tue</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="3" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Wed</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="4" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Thu</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="5" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Fri</div>
-                    </label>
-                    <label class="flex-1 min-w-[30%] text-center cursor-pointer">
-                        <input type="checkbox" value="6" class="day-checkbox peer sr-only">
-                        <div class="bg-white/5 text-gray-300 py-2 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Sat</div>
-                    </label>
-                </div>
-
-                <!-- Conditional: Specific Date -->
-                <div id="specificDateWrapper" class="hidden mt-1">
-                    <input type="date" id="specificDateInput" class="w-full px-4 py-3.5 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white css-invert-calendar">
-                </div>
-
-                <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white w-full py-4 rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors mt-2 text-lg">
-                    Save Habit
-                </button>
-            </form>
         </div>
 
         <!-- Habits List -->
@@ -141,7 +81,86 @@
 
     </div>
 
-    <!-- Move Scripts to the Bottom to Ensure HTML Loads First -->
+    <!-- Smart Modal (Used for both Adding and Editing) -->
+    <div id="habitModal" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-end md:items-center justify-center">
+        <div class="bg-gray-900 p-6 w-full max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl relative animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modalTitle" class="font-bold text-white text-xl">Add New Habit</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center bg-white/10 rounded-full transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveHabit(event)" class="flex flex-col gap-4">
+                <input type="text" id="habitInput" placeholder="e.g., Read 10 pages" class="px-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white placeholder-gray-400 font-medium" required>
+                
+                <div class="relative">
+                    <select id="isRepetitive" onchange="toggleRepetitiveInputs()" class="w-full px-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white appearance-none cursor-pointer font-medium">
+                        <option value="true" class="text-gray-900">Repetitive</option>
+                        <option value="false" class="text-gray-900">One time</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-5 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <!-- Conditional: Days of the Week -->
+                <div id="repetitiveWrapper" class="flex flex-col gap-2 mt-1">
+                    
+                    <!-- The Everyday Shortcut Button -->
+                    <div class="flex justify-end">
+                        <button type="button" onclick="selectAllDays()" class="text-xs font-bold text-brand-400 hover:text-brand-300 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5">
+                            <i class="fas fa-check-double"></i> Everyday
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="0" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Sun</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="1" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Mon</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="2" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Tue</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="3" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Wed</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="4" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Thu</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="5" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Fri</div>
+                        </label>
+                        <label class="flex-1 min-w-[30%] text-center cursor-pointer">
+                            <input type="checkbox" value="6" class="day-checkbox peer sr-only">
+                            <div class="bg-white/5 text-gray-300 py-2.5 rounded-lg text-sm font-medium border border-white/10 peer-checked:bg-brand-500 peer-checked:text-white peer-checked:border-brand-500 transition-all">Sat</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Conditional: Specific Date -->
+                <div id="specificDateWrapper" class="hidden mt-1">
+                    <input type="date" id="specificDateInput" class="w-full px-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-brand-500 bg-white/10 text-white css-invert-calendar font-medium">
+                </div>
+
+                <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white w-full py-4 rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors mt-3 text-lg">
+                    Save Habit
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+
+    <!-- Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -163,6 +182,7 @@
 
         // --- App State ---
         let allHabits = [];
+        let editingHabitId = null; // Tracks if we are editing an existing habit
         const today = new Date();
         
         const toDateStr = (year, month, day) => {
@@ -175,10 +195,54 @@
         window.currentYear = today.getFullYear();
         window.selectedDate = getTodayStr();
 
-        // --- UI Logic ---
-        window.toggleAddForm = () => {
-            const form = document.getElementById("addHabitForm");
-            form.classList.toggle("hidden");
+        // --- UI Modal Logic ---
+        window.openModal = (habitId = null) => {
+            const modal = document.getElementById("habitModal");
+            const title = document.getElementById("modalTitle");
+            editingHabitId = habitId;
+
+            // Reset form completely first
+            document.getElementById("habitInput").value = "";
+            document.getElementById("isRepetitive").value = "true";
+            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById("specificDateInput").value = getTodayStr();
+            toggleRepetitiveInputs();
+
+            if (habitId) {
+                // We are EDITING an existing habit
+                title.innerText = "Edit Habit";
+                const habit = allHabits.find(h => h.id === habitId);
+                
+                document.getElementById("habitInput").value = habit.name;
+                document.getElementById("isRepetitive").value = habit.repetitive.toString();
+                toggleRepetitiveInputs();
+
+                if (habit.repetitive) {
+                    // Check the boxes for the days it is currently scheduled
+                    document.querySelectorAll('.day-checkbox').forEach(cb => {
+                        if (habit.scheduleData.includes(parseInt(cb.value))) {
+                            cb.checked = true;
+                        }
+                    });
+                } else {
+                    document.getElementById("specificDateInput").value = habit.scheduleData;
+                }
+            } else {
+                // We are ADDING a new habit
+                title.innerText = "Add New Habit";
+            }
+
+            modal.classList.remove("hidden");
+        };
+
+        window.closeModal = () => {
+            const modal = document.getElementById("habitModal");
+            modal.classList.add("hidden");
+            editingHabitId = null;
+        };
+
+        window.selectAllDays = () => {
+            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = true);
         };
 
         window.toggleRepetitiveInputs = () => {
@@ -200,7 +264,7 @@
         };
 
         // --- Database Logic ---
-        window.addHabit = async (e) => {
+        window.saveHabit = async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("habitInput");
             const isRepetitive = document.getElementById("isRepetitive").value === "true";
@@ -217,19 +281,26 @@
                 if (!scheduleData) return alert("Please specify a date.");
             }
             
-            await addDoc(habitsRef, {
-                name: name,
-                repetitive: isRepetitive,
-                scheduleData: scheduleData,
-                history: [],
-                order: Date.now(), // New order field
-                createdAt: new Date().toISOString()
-            });
+            if (editingHabitId) {
+                // UPDATE existing habit
+                await updateDoc(doc(db, "habits", editingHabitId), {
+                    name: name,
+                    repetitive: isRepetitive,
+                    scheduleData: scheduleData
+                });
+            } else {
+                // CREATE new habit
+                await addDoc(habitsRef, {
+                    name: name,
+                    repetitive: isRepetitive,
+                    scheduleData: scheduleData,
+                    history: [],
+                    order: Date.now(),
+                    createdAt: new Date().toISOString()
+                });
+            }
             
-            nameInput.value = "";
-            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
-            document.getElementById("specificDateInput").value = "";
-            toggleAddForm(); // Hide form after saving
+            closeModal();
         };
 
         window.toggleHabit = async (id, currentHistoryStr) => {
@@ -241,7 +312,6 @@
             } else {
                 historyArray.push(window.selectedDate); 
             }
-
             await updateDoc(doc(db, "habits", id), { history: historyArray.filter(Boolean) });
         };
 
@@ -265,7 +335,6 @@
             let newCurrentOrder = targetHabit.order;
             let newTargetOrder = currentHabit.order;
             
-            // Fallback just in case old habits share the exact same order number
             if (newCurrentOrder === newTargetOrder) {
                 newCurrentOrder += (direction * 10);
             }
@@ -306,21 +375,14 @@
             const habitsDue = getHabitsForDate(dateStr, dayOfWeekIndex);
             const isFuture = dateStr > getTodayStr();
             
-            // Neutral: No habits scheduled
             if (habitsDue.length === 0) return 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'; 
             
             const completedCount = habitsDue.filter(h => (h.history || []).includes(dateStr)).length;
             
-            // Green: All completed (Even in the future, if pre-completed)
             if (completedCount === habitsDue.length) return 'bg-emerald-500 text-white border-emerald-600 shadow-sm font-semibold hover:bg-emerald-600'; 
-            
-            // Default Neutral: If it is a future day and NOT completely finished
             if (isFuture) return 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'; 
-            
-            // Red: Nothing completed
             if (completedCount === 0) return 'bg-rose-500 text-white border-rose-600 shadow-sm font-semibold hover:bg-rose-600'; 
             
-            // Yellow: Partially completed
             return 'bg-amber-400 text-white border-amber-500 shadow-sm font-semibold hover:bg-amber-500'; 
         };
 
@@ -334,10 +396,7 @@
             const daysInMonth = new Date(window.currentYear, window.currentMonth + 1, 0).getDate();
             
             let calHTML = "";
-            
-            for (let i = 0; i < firstDay; i++) {
-                calHTML += `<div class="p-1"></div>`;
-            }
+            for (let i = 0; i < firstDay; i++) { calHTML += `<div class="p-1"></div>`; }
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = toDateStr(window.currentYear, window.currentMonth, day);
@@ -368,8 +427,6 @@
             document.getElementById("selectedDateLabel").innerText = `${prefix}${formattedSelectedDate}`;
             
             const habitsDueToday = getHabitsForDate(window.selectedDate, selectedDateObj.getDay());
-            
-            // SORT the habits based on their Order value
             habitsDueToday.sort((a, b) => (a.order || 0) - (b.order || 0));
 
             list.innerHTML = "";
@@ -388,7 +445,6 @@
                     const isCompleted = history.includes(window.selectedDate);
                     const historyString = history.join(',');
                     
-                    // Logic to hide the Up arrow on the first item, and Down arrow on the last
                     const upBtn = index > 0 ? `<button onclick="moveHabit('${habit.id}', -1)" class="text-gray-300 hover:text-gray-700 p-1 transition-colors"><i class="fas fa-chevron-up text-[11px]"></i></button>` : `<div class="w-5 h-5"></div>`;
                     const downBtn = index < habitsDueToday.length - 1 ? `<button onclick="moveHabit('${habit.id}', 1)" class="text-gray-300 hover:text-gray-700 p-1 transition-colors"><i class="fas fa-chevron-down text-[11px]"></i></button>` : `<div class="w-5 h-5"></div>`;
 
@@ -407,6 +463,8 @@
                                     ${upBtn}
                                     ${downBtn}
                                 </div>
+                                <!-- Edit Button added here -->
+                                <button onclick="openModal('${habit.id}')" class="text-gray-300 hover:text-brand-500 hover:bg-brand-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors mr-1"><i class="fas fa-pen text-[13px]"></i></button>
                                 <button onclick="deleteHabit('${habit.id}')" class="text-gray-300 hover:text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-trash-alt text-[13px]"></i></button>
                             </div>
                         </div>
@@ -423,7 +481,6 @@
                     return {
                         id: doc.id,
                         ...data,
-                        // Fallback order for any habits created before we added the order feature
                         order: data.order !== undefined ? data.order : new Date(data.createdAt).getTime()
                     };
                 });
